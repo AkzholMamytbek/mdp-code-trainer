@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python for F29AI: from zero to MDP &amp; RL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f6ff; --card:#ffffff; --ink:#18203a; --soft:#5b6584; --line:#e3e8f5;
+  --p1:#2563eb; --p1l:#e8f0ff;
+  --p2:#7c3aed; --p2l:#f1eaff;
+  --p3:#ea580c; --p3l:#fff0e6;
+  --p4:#059669; --p4l:#e3f8f0;
+  --p5:#e11d48; --p5l:#ffe9ee;
+  --ok:#16a34a; --okl:#e6f9ec; --bad:#dc2626; --badl:#fdecec;
+  --tip:#fff7d6; --tipb:#f2c94c; --warn:#ffeceb; --warnb:#ff8a80;
+  --code:#0f172a; --codebg:#f7f9fe;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size:17px;line-height:1.6}
+code{font-family:var(--mono);font-size:.88em;background:#eef2fb;border:1px solid #e0e6f5;padding:1px 6px;border-radius:6px;color:#1e2a55}
+b{font-weight:800}
+a{color:inherit}
+
+/* header */
+header{position:sticky;top:0;z-index:30;background:linear-gradient(100deg,#2563eb 0%,#7c3aed 45%,#ea580c 100%);color:#fff;box-shadow:0 4px 18px rgba(37,99,235,.25)}
+.hwrap{display:flex;align-items:center;gap:16px;padding:10px 20px;max-width:1400px;margin:0 auto}
+.logo{font-weight:900;font-size:19px;letter-spacing:.2px;white-space:nowrap}
+.logo span{opacity:.85;font-weight:700}
+.prog{flex:1;display:flex;align-items:center;gap:10px;min-width:120px}
+.bar{flex:1;height:12px;background:rgba(255,255,255,.28);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:#fff;border-radius:99px;transition:width .5s}
+.prog b{white-space:nowrap;font-size:15px}
+.chip{font-size:13px;font-weight:800;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.2);white-space:nowrap}
+.chip.ready{background:#22c55e}
+.chip.fail{background:#ef4444}
+.menu{display:none;white-space:nowrap;background:rgba(255,255,255,.2);border:0;color:#fff;font:inherit;font-weight:800;border-radius:10px;padding:5px 12px;cursor:pointer}
+
+/* layout */
+.layout{display:flex;max-width:1400px;margin:0 auto;gap:24px;padding:20px}
+nav{width:290px;flex:none;position:sticky;top:76px;align-self:flex-start;max-height:calc(100vh - 96px);overflow:auto;background:var(--card);border-radius:18px;padding:14px;border:1px solid var(--line)}
+nav h4{margin:14px 6px 6px;font-size:13px;text-transform:uppercase;letter-spacing:.8px}
+nav h4:first-child{margin-top:2px}
+nav a{display:flex;justify-content:space-between;gap:8px;text-decoration:none;padding:6px 10px;border-radius:10px;font-size:15px;font-weight:600;color:var(--ink)}
+nav a:hover{background:#f0f3fb}
+nav a small{font-weight:800;color:var(--soft);white-space:nowrap}
+nav a.done small{color:var(--ok)}
+main{flex:1;min-width:0}
+
+.intro{background:var(--card);border-radius:22px;padding:22px 26px;border:1px solid var(--line);margin-bottom:22px}
+.intro h1{margin:0 0 6px;font-size:30px;font-weight:900;line-height:1.2}
+.intro p{margin:8px 0}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.how div{background:#f6f8ff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:15px}
+.how div b{display:block;font-size:16px}
+
+.parthead{border-radius:22px;padding:18px 24px;color:#fff;margin:34px 0 18px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.parthead h2{margin:0;font-size:26px;font-weight:900}
+.parthead p{margin:4px 0 0;opacity:.95}
+
+.lesson{background:var(--card);border-radius:22px;padding:22px 26px;margin-bottom:22px;border:1px solid var(--line);border-top:7px solid var(--pc);scroll-margin-top:84px}
+.lesson h3{margin:0 0 10px;font-size:23px;font-weight:900;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:900;color:var(--pc);background:var(--pcl);padding:3px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:.6px}
+.lesson p{margin:10px 0}
+.lesson ul{margin:8px 0 10px;padding-left:24px}
+.lesson li{margin:3px 0}
+
+.tip,.warn{border-radius:14px;padding:10px 16px;margin:14px 0;border-left:6px solid}
+.tip{background:var(--tip);border-color:var(--tipb)}
+.warn{background:var(--warn);border-color:var(--warnb)}
+.tip::before{content:"💡 Tip: ";font-weight:900}
+.warn::before{content:"⚠️ Careful: ";font-weight:900}
+
+pre.hl{margin:0;font-family:var(--mono);font-size:14.5px;line-height:1.55;white-space:pre;color:var(--code)}
+.example{margin:14px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--codebg)}
+.example .src{padding:12px 16px;overflow:auto}
+.example .bar2{display:flex;gap:8px;align-items:center;padding:6px 10px;background:#eef2fb;border-top:1px solid var(--line);flex-wrap:wrap}
+.example .lbl{font-size:12px;font-weight:900;color:var(--soft);text-transform:uppercase;letter-spacing:.6px;margin-right:auto}
+.example .out{display:none;padding:10px 16px;background:#0f172a;color:#d6f5e3;font-family:var(--mono);font-size:14px;white-space:pre-wrap;border-top:1px solid #0b1220}
+.example .out.show{display:block}
+.example .out::before{content:"output";display:block;font-size:11px;color:#8fa3c7;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px}
+
+.k{color:#7c3aed;font-weight:600}.s{color:#059669}.n{color:#ea580c}.c{color:#8a94ad;font-style:italic}.f{color:#2563eb;font-weight:600}.bi{color:#c026d3}
+
+button.b{font:inherit;font-size:14px;font-weight:800;border:0;border-radius:10px;padding:6px 14px;cursor:pointer;transition:transform .08s,filter .15s}
+button.b:hover{filter:brightness(1.05)}
+button.b:active{transform:scale(.97)}
+.b.check{background:var(--ok);color:#fff;font-size:15px;padding:8px 18px}
+.b.hint{background:#fff3c4;color:#7a5a00}
+.b.sol{background:#ffe1e6;color:#a1123a}
+.b.reset{background:#eef1f8;color:var(--soft)}
+.b.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.b.run{background:var(--p1);color:#fff}
+
+/* exercise */
+.ex{margin:20px 0 8px;border:2px solid var(--pc);border-radius:18px;background:linear-gradient(180deg,var(--pcl),#fff 90px);padding:14px 16px 16px}
+.ex.passed{border-color:var(--ok);background:linear-gradient(180deg,var(--okl),#fff 90px)}
+.exhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.exhead .yt{font-weight:900;color:var(--pc);font-size:14px;text-transform:uppercase;letter-spacing:.6px}
+.ex.passed .exhead .yt{color:var(--ok)}
+.exhead h5{margin:0;font-size:18px;font-family:var(--mono);font-weight:600}
+.badge{margin-left:auto;font-size:13px;font-weight:900;border-radius:99px;padding:3px 10px;background:#eef1f8;color:var(--soft)}
+.ex.passed .badge{background:var(--ok);color:#fff}
+.task{margin:8px 0 10px}
+.editor{position:relative;border:2px solid #d7def0;border-radius:12px;background:#fff;overflow:auto}
+.editor:focus-within{border-color:var(--pc);box-shadow:0 0 0 4px var(--pcl)}
+.editor pre,.editor textarea{margin:0;padding:12px 14px;font-family:var(--mono);font-size:15px;line-height:1.55;white-space:pre;tab-size:4;border:0;min-width:100%;letter-spacing:0}
+.editor pre{position:absolute;inset:0 auto auto 0;pointer-events:none;color:var(--code)}
+.editor textarea{position:relative;display:block;width:100%;resize:none;background:transparent;color:transparent;caret-color:#111;outline:none;overflow:hidden}
+.editor textarea::selection{background:rgba(37,99,235,.25);color:transparent}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.btns .kbd{font-size:12px;color:var(--soft);margin-left:4px}
+.reveal{display:none;margin-top:10px;border-radius:12px;padding:10px 14px}
+.reveal.show{display:block}
+.reveal.h{background:#fff8dc;border:1px solid #f2dc8a}
+.reveal.h::before{font-weight:900;display:block;font-size:13px;color:#7a5a00}
+.reveal.h1::before{content:"Hint 1"}
+.reveal.h2::before{content:"Hint 2"}
+.reveal.solb{background:#fff4f6;border:1px solid #ffc9d4}
+.reveal.solb .t{font-weight:900;font-size:13px;color:#a1123a;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.results{margin-top:12px}
+.sum{font-weight:900;padding:8px 14px;border-radius:12px}
+.sum.ok{background:var(--okl);color:#0f6b31}
+.sum.bad{background:var(--badl);color:#9b1c1c}
+.sum.wait{background:#eef2fb;color:var(--soft)}
+table.t{width:100%;border-collapse:separate;border-spacing:0 6px;margin-top:6px;font-size:14px}
+table.t td{padding:7px 10px;background:#f7f9fe;vertical-align:top}
+table.t td:first-child{border-radius:10px 0 0 10px;width:30px;text-align:center;font-weight:900}
+table.t td:last-child{border-radius:0 10px 10px 0}
+table.t tr.p td{background:#eefbf2}
+table.t tr.f td{background:#fff0f0}
+table.t .m{font-family:var(--mono);font-size:13px;word-break:break-word}
+table.t .lab{font-size:11px;font-weight:900;color:var(--soft);text-transform:uppercase;letter-spacing:.5px}
+.note{margin-top:4px;color:#9b1c1c;font-weight:700;font-size:13.5px}
+.errbox{margin-top:8px;background:#2a0f13;color:#ffd7dc;font-family:var(--mono);font-size:13.5px;white-space:pre-wrap;border-radius:12px;padding:10px 14px}
+.errtip{margin-top:6px;background:var(--tip);border-left:6px solid var(--tipb);border-radius:10px;padding:8px 12px;font-size:15px}
+.stdout{margin-top:8px;background:#0f172a;color:#d6f5e3;font-family:var(--mono);font-size:13.5px;white-space:pre-wrap;border-radius:12px;padding:10px 14px}
+.stdout::before{content:"your print output";display:block;font-size:11px;color:#8fa3c7;text-transform:uppercase;letter-spacing:.8px}
+.party{font-size:15px;margin-top:6px;font-weight:800;color:#0f6b31}
+
+#diag{display:none;position:fixed;top:64px;right:16px;z-index:50;width:min(520px,calc(100vw - 32px));max-height:60vh;overflow:auto;background:#0f172a;color:#d6f5e3;font-family:var(--mono);font-size:12px;border-radius:14px;padding:10px 12px;white-space:pre-wrap;box-shadow:0 18px 50px rgba(15,23,42,.35)}
+#diag.show{display:block}
+.chip{cursor:pointer}
+/* playground */
+.pgbtn{position:fixed;right:20px;bottom:20px;z-index:40;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:0;border-radius:99px;padding:12px 20px;font:inherit;font-weight:900;box-shadow:0 8px 24px rgba(37,99,235,.35);cursor:pointer}
+.pg{position:fixed;right:20px;bottom:76px;z-index:41;width:min(560px,calc(100vw - 40px));max-height:calc(100vh - 120px);overflow:auto;background:#fff;border-radius:18px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(15,23,42,.25);padding:14px 16px;display:none}
+.pg.show{display:block}
+.pg h4{margin:0 0 4px;font-size:18px;font-weight:900}
+.pg p{margin:0 0 8px;font-size:14px;color:var(--soft)}
+.pgout{margin-top:10px}
+
+@media (max-width:980px){
+  nav{position:fixed;top:62px;left:10px;right:10px;width:auto;max-height:70vh;z-index:35;display:none;box-shadow:0 18px 50px rgba(15,23,42,.25)}
+  nav.show{display:block}
+  .menu{display:inline-block}
+  .layout{padding:12px}
+  .lesson,.intro{padding:16px}
+  .logo span{display:none}
+}
+@media (max-width:600px){
+  .hwrap{gap:10px;padding:8px 12px}
+  .logo{font-size:16px}
+  .prog b{font-size:13px}
+  .chip{font-size:11px;padding:3px 8px}
+  .chip:not(.ready):not(.fail){display:none}
+  .chip.ready{font-size:0;padding:0;width:12px;height:12px}
+  .lesson h3{font-size:20px}
+  .intro h1{font-size:24px}
+}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <button class="menu" id="menu">☰ Lessons</button>
+  <div class="logo">🐍 Python for F29AI <span>· zero → MDP → RL</span></div>
+  <div class="prog"><div class="bar"><i id="barfill"></i></div><b id="progtxt">0 / 0</b></div>
+  <div class="chip" id="pychip" title="Click for details">Python: loading…</div>
+</div></header>
+<div id="diag"></div>
+
+<div class="layout">
+  <nav id="nav"></nav>
+  <main id="main">
+    <section class="intro">
+      <h1>Learn to write the exam code yourself 💪</h1>
+      <p>Small steps: read a short explanation, look at an example, then <b>write a tiny piece of code yourself</b> and press <b>Check</b>. Your code really runs (real Python in your browser), like CodeRunner.</p>
+      <div class="how">
+        <div><b>▶ Check</b>Runs the tests. Shortcut: Ctrl / Cmd + Enter.</div>
+        <div><b>💡 Hints</b>Two hints per exercise. Open them only when stuck.</div>
+        <div><b>👀 Solution</b>Asks twice, so you try first. Then retype it yourself!</div>
+        <div><b>🧪 Playground</b>Bottom-right button: run any code you like.</div>
+        <div><b>💾 Progress</b>Saved in this browser. Ticks and your code stay.</div>
+        <div><b>⌨️ Editor</b>Tab = 4 spaces. Enter keeps the indentation.</div>
+      </div>
+    </section>
+    <div id="content"></div>
+  </main>
+</div>
+
+<button class="pgbtn" id="pgbtn">🧪 Playground</button>
+<div class="pg" id="pg">
+  <h4>🧪 Playground</h4>
+  <p>Run any Python. <code>EX</code> and <code>STUDY</code> already exist here. Use <code>print(...)</code> to see values.</p>
+  <div class="editor" id="pgeditor"></div>
+  <div class="btns"><button class="b run" id="pgrun">▶ Run</button><button class="b reset" id="pgclear">Clear</button><span class="kbd">Ctrl / Cmd + Enter</span></div>
+  <div class="pgout" id="pgout"></div>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const PARTS = {
+  1:{name:"Part 1 · Python warm-up", desc:"Variables, functions, if, lists, loops, tuples, nested lists, dicts. Everything the exam code is made of.", c:"--p1"},
+  2:{name:"Part 2 · Reading an MDP", desc:"The transitions[s][a] format, the triple loop, and the 5 mock-test questions.", c:"--p2"},
+  3:{name:"Part 3 · Solving MDPs", desc:"Q-values, Bellman backup, value iteration, policy extraction, policy evaluation.", c:"--p3"},
+  4:{name:"Part 4 · Reinforcement learning", desc:"Returns, Monte Carlo, TD, Q-learning, ε-greedy, model-based estimates.", c:"--p4"},
+  5:{name:"Part 5 · Final challenge", desc:"The 5 exam-style tasks. Try them without hints!", c:"--p5"},
+};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+/* ---------- storage ---------- */
+const KEY = "f29ai-pylearn-v1";
+let store = {passed:{}, code:{}};
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && s.passed) store = s; } catch(e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e) {} }
+
+/* ---------- text + highlight ---------- */
+function inline(t){
+  const codes = [];
+  t = t.replace(/`([^`]+)`/g, (m, c) => { codes.push(c); return "\u0000" + (codes.length - 1) + "\u0000"; });
+  t = esc(t).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\w)/g, "$1<i>$2</i>");
+  return t.replace(/\u0000(\d+)\u0000/g, (m, i) => "<code>" + esc(codes[+i]) + "</code>");
+}
+function md(text){
+  const lines = text.split("\n"); let html = "", inList = false, para = [];
+  const flush = () => { if (para.length) { html += "<p>" + inline(para.join(" ")) + "</p>"; para = []; } };
+  for (const ln of lines){
+    if (ln.startsWith("- ")){ flush(); if (!inList){ html += "<ul>"; inList = true; } html += "<li>" + inline(ln.slice(2)) + "</li>"; }
+    else { if (inList){ html += "</ul>"; inList = false; } para.push(ln); }
+  }
+  flush(); if (inList) html += "</ul>";
+  return html;
+}
+const KW = new Set("def return for in if elif else while break continue and or not None True False import from lambda pass is as with try except".split(" "));
+const BI = new Set("print len range enumerate max min abs sorted set list dict sum reversed float int str tuple round zip".split(" "));
+function hl(code){
+  const re = /(#[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(\b\d+\.?\d*(?:e-?\d+)?\b)|([A-Za-z_]\w*)|([\s\S])/g;
+  let out = "", m, prevDef = false;
+  while ((m = re.exec(code))){
+    if (m[1]) out += '<span class="c">' + esc(m[1]) + "</span>";
+    else if (m[2]) out += '<span class="s">' + esc(m[2]) + "</span>";
+    else if (m[3]) out += '<span class="n">' + m[3] + "</span>";
+    else if (m[4]){
+      const w = m[4];
+      if (KW.has(w)) out += '<span class="k">' + w + "</span>";
+      else if (prevDef) out += '<span class="f">' + w + "</span>";
+      else if (BI.has(w)) out += '<span class="bi">' + w + "</span>";
+      else out += w;
+      prevDef = (w === "def");
+      continue;
+    } else out += esc(m[5]);
+    if (m[5] && /\S/.test(m[5])) prevDef = false;
+  }
+  return out;
+}
+
+/* ---------- editor ---------- */
+function makeEditor(host, initial, onChange, onRun){
+  host.innerHTML = '<pre aria-hidden="true"></pre><textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>';
+  const pre = host.querySelector("pre"), ta = host.querySelector("textarea");
+  ta.value = initial;
+  const sync = () => {
+    pre.innerHTML = hl(ta.value) + "\n";
+    const lines = ta.value.split("\n").length;
+    ta.style.height = "auto";
+    ta.style.height = Math.max(ta.scrollHeight, (lines + 1) * 23.25 + 24) + "px";
+    const w = pre.scrollWidth;
+    ta.style.width = Math.max(host.clientWidth, w) + "px";
+  };
+  const insert = (text, delBefore = 0) => {
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    ta.setRangeText(text, s - delBefore, e, "end");
+    sync(); onChange && onChange(ta.value);
+  };
+  ta.addEventListener("input", () => { sync(); onChange && onChange(ta.value); });
+  ta.addEventListener("keydown", ev => {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter"){ ev.preventDefault(); onRun && onRun(); return; }
+    if (ev.key === "Tab"){
+      ev.preventDefault();
+      const s = ta.selectionStart, v = ta.value, ls = v.lastIndexOf("\n", s - 1) + 1;
+      if (ev.shiftKey){
+        if (v.slice(ls, ls + 4) === "    "){ ta.setRangeText("", ls, ls + 4, "preserve"); ta.selectionStart = ta.selectionEnd = Math.max(ls, s - 4); sync(); onChange && onChange(ta.value); }
+      } else insert("    ");
+      return;
+    }
+    if (ev.key === "Enter"){
+      ev.preventDefault();
+      const s = ta.selectionStart, v = ta.value, ls = v.lastIndexOf("\n", s - 1) + 1;
+      const line = v.slice(ls, s);
+      let ind = (line.match(/^ */) || [""])[0];
+      if (/:\s*(#.*)?$/.test(line)) ind += "    ";
+      if (/^\s*(return|pass|break|continue)\b/.test(line) && ind.length >= 4) ind = ind.slice(4);
+      insert("\n" + ind);
+      return;
+    }
+    if (ev.key === "Backspace" && ta.selectionStart === ta.selectionEnd){
+      const s = ta.selectionStart, v = ta.value, ls = v.lastIndexOf("\n", s - 1) + 1;
+      const before = v.slice(ls, s);
+      if (before.length >= 4 && /^ +$/.test(before) && before.length % 4 === 0){ ev.preventDefault(); ta.setRangeText("", s - 4, s, "end"); sync(); onChange && onChange(ta.value); }
+    }
+  });
+  new ResizeObserver(sync).observe(host);
+  sync();
+  return { get: () => ta.value, set: v => { ta.value = v; sync(); onChange && onChange(v); }, focus: () => ta.focus() };
+}
+
+/* ---------- diagnostics ---------- */
+const DIAG = [];
+const T0 = performance.now();
+function dlog(m){ DIAG.push(((performance.now() - T0) / 1000).toFixed(1) + "s  " + m); const d = $("diag"); if (d) d.textContent = DIAG.join("\n"); }
+document.addEventListener("securitypolicyviolation", e => dlog("CSP BLOCKED: " + e.violatedDirective + " -> " + e.blockedURI));
+window.addEventListener("error", e => dlog("JS error: " + (e.message || e.type) + (e.filename ? " @ " + e.filename.slice(-60) : "")), true);
+window.addEventListener("unhandledrejection", e => dlog("Unhandled: " + (e.reason && (e.reason.message || e.reason))));
+/* ---------- python engine (Skulpt, runs fully in the page) ---------- */
+const SK_BASE = "https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/";
+const SETUP = DATA.setup.endsWith("\n") ? DATA.setup : DATA.setup + "\n";
+const OFFSET = SETUP.split("\n").length - 1;
+let pyPromise = null;
+function setChip(cls, txt){ const c = $("pychip"); c.className = "chip " + cls; c.textContent = txt; }
+function loadScript(u){ return new Promise((res, rej) => { const s = document.createElement("script"); s.src = u; s.onload = res; s.onerror = () => rej(new Error("could not load " + u)); document.head.appendChild(s); }); }
+function getPy(){
+  if (pyPromise) return pyPromise;
+  dlog("loading Python engine");
+  pyPromise = (async () => {
+    if (!window.Sk) await loadScript(SK_BASE + "skulpt.min.js");
+    if (!window.Sk || !Sk.builtinFiles) await loadScript(SK_BASE + "skulpt-stdlib.js");
+    dlog("engine loaded");
+    setChip("ready", "Python ready ✓");
+    return true;
+  })().catch(e => { dlog("FAILED: " + e.message); setChip("fail", "Python failed: click"); pyPromise = null; throw e; });
+  return pyPromise;
+}
+function skRead(x){
+  if (Sk.builtinFiles === undefined || Sk.builtinFiles.files[x] === undefined) throw "File not found: '" + x + "'";
+  return Sk.builtinFiles.files[x];
+}
+async function runPy(prog){
+  let out = "";
+  Sk.configure({ output: t => { out += t; }, read: skRead, __future__: Sk.python3, execLimit: 4000, yieldLimit: null });
+  Sk.execStart = Date.now();
+  const t0 = Date.now();
+  await new Promise(r => setTimeout(r, 0));   // let the "Running…" message paint
+  try {
+    const mod = Sk.importMainWithBody("<stdin>", false, prog, false);
+    return { mod, out, ms: Date.now() - t0 };
+  } catch (err) {
+    if (Date.now() - t0 >= 3900) err = "TimeoutError: your code ran for too long (infinite loop?)";
+    return { err, out, ms: Date.now() - t0 };
+  }
+}
+const TIPS = {
+  NameError: "A name is not defined. Check spelling, and that the function name in your def line is exactly the one asked for.",
+  IndexError: "An index is outside the list. Remember: indexes start at 0, and the last index is len(lst) - 1.",
+  IndentationError: "Indentation problem. Lines inside def / for / if must be indented by 4 more spaces than the line with the colon.",
+  SyntaxError: "Python could not read your code. Look for a missing colon ':' at the end of def / for / if lines, or unclosed brackets.",
+  ZeroDivisionError: "You divided by zero. Guard the division with an if.",
+  KeyError: "That key is not in the dictionary. Use d.get(key, 0) when the key may be missing.",
+  TimeoutError: "Your code ran for too long. Is there an infinite loop (e.g. a while loop that never stops)?",
+};
+function tipFor(text){
+  const name = String(text).split(":")[0].trim();
+  if (name === "TypeError" && /NoneType/.test(text)) return "Something is None. A function that has no return statement gives back None.";
+  if (/unpack/.test(text)) return "The number of names on the left does not match the number of values. An MDP outcome has exactly 4 values: prob, next_state, reward, terminal. Also check you are unpacking at the right loop level.";
+  return TIPS[name] || "";
+}
+function fmtErr(err, code){
+  let s = String(err && err.toString ? err.toString() : err);
+  let line = null;
+  if (err && err.traceback && err.traceback.length){
+    for (const fr of err.traceback){ const l = fr.lineno - OFFSET; if (l >= 1 && l <= code.split("\n").length) line = l; }
+  }
+  s = s.replace(/ on line -?\d+/g, "");
+  if (/TimeoutError|exceeded run time/i.test(s)) s = "TimeoutError: your code ran for too long (infinite loop?)";
+  if (line !== null){ const src = (code.split("\n")[line - 1] || "").trim(); s += "\n  at line " + line + ":  " + src; }
+  return { error: s, tip: tipFor(s) };
+}
+const CLOSE_SRC = `
+def _h_close(a, b):
+    if isinstance(b, bool) or isinstance(a, bool):
+        return isinstance(a, bool) and isinstance(b, bool) and a == b
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return abs(a - b) <= 1e-6 + 1e-9 * abs(b)
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        if len(a) != len(b):
+            return False
+        for _h_i in range(len(a)):
+            if not _h_close(a[_h_i], b[_h_i]):
+                return False
+        return True
+    if isinstance(a, dict) and isinstance(b, dict):
+        if len(a) != len(b):
+            return False
+        for _h_k in b:
+            if _h_k not in a:
+                return False
+            if not _h_close(a[_h_k], b[_h_k]):
+                return False
+        return True
+    return a == b
+
+def _h_note(g, e):
+    if _h_close(g, e):
+        return ""
+    if g is None and e is not None:
+        return "Your function returned None. Did you forget return (or is return inside an if that did not run)?"
+    if isinstance(e, bool) and not isinstance(g, bool):
+        return "Expected True or False."
+    if isinstance(e, (list, tuple)) and isinstance(g, (list, tuple)) and len(g) != len(e):
+        return "Wrong length: expected " + str(len(e)) + " items, got " + str(len(g)) + "."
+    return ""
+
+_h_results = []
+`;
+function buildCheck(code, tests){
+  let f = CLOSE_SRC;
+  for (const t of tests){
+    f += "try:\n    _h_g = (" + t.expr + ")\n    _h_e = (" + t.expected + ")\n    _h_results.append([_h_close(_h_g, _h_e), repr(_h_g), _h_note(_h_g, _h_e)])\n" +
+         "except Exception as _h_x:\n    _h_results.append([False, 'ERROR ' + type(_h_x).__name__ + ': ' + str(_h_x), ''])\n";
+  }
+  return SETUP + code + "\n" + f;
+}
+async function pyCall(fn, code, tests){
+  await getPy();
+  if (fn === "play"){
+    const r = await runPy(SETUP + code + "\n");
+    if (r.err){ const e = fmtErr(r.err, code); return { stdout: r.out, error: e.error, tip: e.tip }; }
+    return { stdout: r.out, error: null, tip: "" };
+  }
+  tests = JSON.parse(tests);
+  // 1) run the user's code alone (clear errors with line numbers)
+  const r0 = await runPy(SETUP + code + "\n");
+  if (r0.err){ const e = fmtErr(r0.err, code); return { error: e.error, tip: e.tip, results: [], stdout: r0.out }; }
+  // 2) run the tests
+  const r = await runPy(buildCheck(code, tests));
+  if (r.err){ const e = fmtErr(r.err, code); return { error: e.error, tip: e.tip, results: [], stdout: r.out }; }
+  const raw = Sk.ffi.remapToJs(r.mod.$d._h_results);
+  if (r.ms >= 3900) return { error: "TimeoutError: your code ran for too long (infinite loop?)", tip: TIPS.TimeoutError, results: [], stdout: r.out.slice(-2000) };
+  const results = tests.map((t, i) => {
+    const x = raw[i] || [false, "(no result)", ""];
+    let got = String(x[1]), note = x[2] || "";
+    if (got.startsWith("ERROR ")){ got = got.slice(6); note = tipFor(got); }
+    return { expr: t.expr, expected: t.expected, got, pass: x[0] === true, note };
+  });
+  return { error: null, tip: "", results, stdout: r.out.slice(-2000) };
+}
+
+/* self-test: open the page with #selftest */
+async function runSelfTest(){
+  $("diag").classList.add("show");
+  dlog("SELFTEST start");
+  let bad = 0, n = 0;
+  for (const id of Object.keys(exIndex)){
+    const ex = exIndex[id].ex; n++;
+    const a = await pyCall("check", ex.solution, JSON.stringify(ex.tests));
+    const okSol = !a.error && a.results.every(r => r.pass);
+    const b = await pyCall("check", ex.starter, JSON.stringify(ex.tests));
+    const okStart = !b.error && b.results.length && b.results.every(r => r.pass);
+    if (!okSol || okStart){
+      bad++;
+      dlog("PROBLEM " + id + (okSol ? "" : " solution: " + (a.error || JSON.stringify(a.results.filter(r => !r.pass).map(r => [r.expr, r.expected, r.got])))) + (okStart ? " starter passes" : ""));
+    }
+  }
+  dlog("SELFTEST done: " + n + " exercises, " + bad + " problems");
+  const p = await pyCall("play", "print(len(EX))\nfor i in range(3):\n    print(i * 0.1)\nprint(repr(7.550000000000001), 1/3, 2**10, [1.0, 2.5])\n");
+  dlog("play: " + JSON.stringify(p));
+  const loop = await pyCall("check", "def total(lst):\n    while True:\n        pass\n", JSON.stringify([{expr: "total([1])", expected: "1"}]));
+  dlog("loop: " + JSON.stringify(loop).slice(0, 300));
+  const syn = await pyCall("check", "def sign(x)\n    return 1\n", "[]");
+  dlog("syntax: " + JSON.stringify(syn).slice(0, 300));
+  const rt = await pyCall("check", "def f(x):\n    y = x[5]\n    return y\nf([1])\n", "[]");
+  dlog("runtime: " + JSON.stringify(rt).slice(0, 300));
+}
+
+/* ---------- build page ---------- */
+const exIndex = {};      // id -> {ex, el, lessonId, part}
+const lessonEx = {};     // lessonId -> [ids]
+function render(){
+  const content = $("content"), nav = $("nav");
+  let curPart = 0, navHtml = "";
+  for (const L of DATA.lessons){
+    const P = PARTS[L.part];
+    if (L.part !== curPart){
+      curPart = L.part;
+      const h = document.createElement("div");
+      h.className = "parthead"; h.id = "part-" + L.part;
+      h.style.background = `linear-gradient(110deg, var(${P.c}), color-mix(in srgb, var(${P.c}) 70%, #ffffff))`;
+      h.innerHTML = `<h2>${esc(P.name)}</h2><p>${esc(P.desc)}</p>`;
+      content.appendChild(h);
+      navHtml += `<h4 style="color:var(${P.c})">${esc(P.name)}</h4>`;
+    }
+    const sec = document.createElement("section");
+    sec.className = "lesson"; sec.id = L.id;
+    sec.style.setProperty("--pc", `var(${P.c})`);
+    sec.style.setProperty("--pcl", `var(${P.c}l)`);
+    sec.innerHTML = `<h3><span class="tag">Part ${L.part}</span>${esc(L.title)}</h3>`;
+    lessonEx[L.id] = [];
+    for (const b of L.blocks){
+      if (b.t === "p"){ const d = document.createElement("div"); d.innerHTML = md(b.text); sec.appendChild(d); }
+      else if (b.t === "tip" || b.t === "warn"){ const d = document.createElement("div"); d.className = b.t; d.innerHTML = inline(b.text); sec.appendChild(d); }
+      else if (b.t === "code"){ sec.appendChild(exampleEl(b)); }
+      else if (b.t === "ex"){ sec.appendChild(exerciseEl(b, L)); lessonEx[L.id].push(b.id); }
+    }
+    content.appendChild(sec);
+    navHtml += `<a href="#${L.id}" data-l="${L.id}"><span>${esc(L.title)}</span><small></small></a>`;
+  }
+  nav.innerHTML = navHtml;
+  nav.querySelectorAll("a").forEach(a => a.addEventListener("click", () => nav.classList.remove("show")));
+  updateProgress();
+}
+
+function exampleEl(b){
+  const d = document.createElement("div"); d.className = "example";
+  const hasOut = b.output && b.output.length;
+  d.innerHTML = `<div class="src"><pre class="hl">${hl(b.code)}</pre></div>
+    <div class="bar2"><span class="lbl">example</span>
+    ${hasOut ? '<button class="b ghost so">👁 Show output</button>' : ""}
+    <button class="b ghost tp">🧪 Try in playground</button></div>
+    ${hasOut ? `<div class="out">${esc(b.output.replace(/\n$/, ""))}</div>` : ""}`;
+  if (hasOut){
+    const btn = d.querySelector(".so"), out = d.querySelector(".out");
+    btn.onclick = () => { out.classList.toggle("show"); btn.textContent = out.classList.contains("show") ? "🙈 Hide output" : "👁 Show output"; };
+  }
+  d.querySelector(".tp").onclick = () => openPlayground(b.code);
+  return d;
+}
+
+function exerciseEl(ex, L){
+  const d = document.createElement("div"); d.className = "ex"; d.id = ex.id;
+  d.innerHTML = `<div class="exhead"><span class="yt">✍️ Your turn</span><h5>${esc(ex.title)}</h5><span class="badge">not done</span></div>
+    <div class="task">${md(ex.task)}</div>
+    <div class="editor"></div>
+    <div class="btns">
+      <button class="b check">▶ Check</button>
+      <button class="b hint h1b">💡 Hint 1</button>
+      <button class="b hint h2b">💡 Hint 2</button>
+      <button class="b sol">👀 Solution</button>
+      <button class="b reset">↺ Reset</button>
+      <span class="kbd">Ctrl / Cmd + Enter = Check</span>
+    </div>
+    <div class="reveal h h1">${inline(ex.hints[0] || "")}</div>
+    <div class="reveal h h2">${inline(ex.hints[1] || "")}</div>
+    <div class="reveal solb"><div class="t"><span>Model solution: read it, then close it and type it yourself</span><button class="b ghost cp">Copy into editor</button></div><pre class="hl">${hl(ex.solution)}</pre></div>
+    <div class="results"></div>`;
+  const ed = makeEditor(d.querySelector(".editor"), store.code[ex.id] ?? ex.starter,
+    v => { store.code[ex.id] = v; saveSoon(); }, () => check());
+  const res = d.querySelector(".results");
+  const toggle = (sel, btn, on, off) => { const r = d.querySelector(sel); r.classList.toggle("show"); btn.textContent = r.classList.contains("show") ? off : on; };
+  const h1b = d.querySelector(".h1b"), h2b = d.querySelector(".h2b"), solb = d.querySelector(".sol");
+  h1b.onclick = () => toggle(".h1", h1b, "💡 Hint 1", "💡 Hide hint 1");
+  h2b.onclick = () => toggle(".h2", h2b, "💡 Hint 2", "💡 Hide hint 2");
+  let solArmed = false;
+  solb.onclick = () => {
+    const r = d.querySelector(".solb");
+    if (r.classList.contains("show")){ r.classList.remove("show"); solb.textContent = "👀 Solution"; return; }
+    if (!solArmed && !store.passed[ex.id]){ solArmed = true; solb.textContent = "Sure? Try the hints first. Click again"; return; }
+    r.classList.add("show"); solb.textContent = "👀 Hide solution"; solArmed = false;
+  };
+  d.querySelector(".cp").onclick = () => { ed.set(ex.solution); };
+  const rb = d.querySelector(".reset"); let resetArmed = false;
+  rb.onclick = () => {
+    if (!resetArmed){ resetArmed = true; rb.textContent = "Click again to reset"; setTimeout(() => { resetArmed = false; rb.textContent = "↺ Reset"; }, 2500); return; }
+    resetArmed = false; rb.textContent = "↺ Reset"; ed.set(ex.starter); res.innerHTML = "";
+  };
+  async function check(){
+    res.innerHTML = `<div class="sum wait">⏳ Running your code…${pyPromise ? "" : " (loading Python…)"}</div>`;
+    let r;
+    try { r = await pyCall("check", ed.get(), JSON.stringify(ex.tests)); }
+    catch (e) { res.innerHTML = `<div class="sum bad">Python could not load. Check your internet connection and reload the page.</div>`; return; }
+    showResult(r);
+  }
+  function showResult(r){
+    let html = "";
+    if (r.error){
+      html += `<div class="sum bad">❌ Your code has an error</div><div class="errbox">${esc(r.error)}</div>`;
+      if (r.tip) html += `<div class="errtip">${esc(r.tip)}</div>`;
+    } else {
+      const n = r.results.length, ok = r.results.filter(x => x.pass).length;
+      const all = ok === n;
+      html += `<div class="sum ${all ? "ok" : "bad"}">${all ? "✅ All " + n + " tests passed!" : "❌ " + ok + " of " + n + " tests passed"}</div>`;
+      if (all) html += `<div class="party">${["🎉 Great job!", "🔥 Nice, keep going!", "💪 Correct!", "⭐ Perfect!", "🚀 You've got it!"][Math.floor(Math.random() * 5)]}</div>`;
+      html += `<table class="t">` + r.results.map(x => `<tr class="${x.pass ? "p" : "f"}"><td>${x.pass ? "✓" : "✗"}</td><td>
+        <div class="lab">test</div><div class="m">${esc(x.expr)}</div></td><td><div class="lab">expected</div><div class="m">${esc(x.expected)}</div></td>
+        <td><div class="lab">got</div><div class="m">${esc(x.got)}</div>${x.note ? `<div class="note">${esc(x.note)}</div>` : ""}</td></tr>`).join("") + `</table>`;
+      if (all && !store.passed[ex.id]){ store.passed[ex.id] = 1; save(); updateProgress(); }
+    }
+    if (r.stdout) html += `<div class="stdout">${esc(r.stdout)}</div>`;
+    res.innerHTML = html;
+  }
+  d.querySelector(".check").onclick = check;
+  exIndex[ex.id] = { ex, el: d, lessonId: L.id };
+  return d;
+}
+
+let saveT = null;
+function saveSoon(){ clearTimeout(saveT); saveT = setTimeout(save, 400); }
+
+function updateProgress(){
+  const all = Object.keys(exIndex), done = all.filter(id => store.passed[id]).length;
+  $("barfill").style.width = (all.length ? 100 * done / all.length : 0) + "%";
+  $("progtxt").textContent = `${done} / ${all.length} done`;
+  for (const id of all) exIndex[id].el.classList.toggle("passed", !!store.passed[id]);
+  for (const id of all) exIndex[id].el.querySelector(".badge").textContent = store.passed[id] ? "✓ passed" : "not done";
+  document.querySelectorAll("nav a").forEach(a => {
+    const ids = lessonEx[a.dataset.l] || [], d2 = ids.filter(i => store.passed[i]).length;
+    a.querySelector("small").textContent = ids.length ? (d2 === ids.length ? "✓ " : "") + d2 + "/" + ids.length : "";
+    a.classList.toggle("done", ids.length > 0 && d2 === ids.length);
+  });
+}
+
+/* ---------- playground ---------- */
+let pgEd = null;
+function openPlayground(code){
+  $("pg").classList.add("show");
+  if (code !== undefined) pgEd.set(code);
+  pgEd.focus();
+}
+async function runPlay(){
+  const out = $("pgout");
+  out.innerHTML = `<div class="sum wait">⏳ Running…</div>`;
+  let r;
+  try { r = await pyCall("play", pgEd.get()); }
+  catch (e) { out.innerHTML = `<div class="sum bad">Python could not load.</div>`; return; }
+  let html = r.stdout ? `<div class="stdout">${esc(r.stdout)}</div>` : (r.error ? "" : `<div class="sum wait">No output. Use print(...) to show values.</div>`);
+  if (r.error){ html += `<div class="errbox">${esc(r.error)}</div>`; if (r.tip) html += `<div class="errtip">${esc(r.tip)}</div>`; }
+  out.innerHTML = html;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  render();
+  pgEd = makeEditor($("pgeditor"), store.play ?? "# Try anything here\nprint(len(EX))\nprint(STUDY[1][0])\n", v => { store.play = v; saveSoon(); }, runPlay);
+  $("pgbtn").onclick = () => $("pg").classList.contains("show") ? $("pg").classList.remove("show") : openPlayground();
+  $("pgrun").onclick = runPlay;
+  $("pgclear").onclick = () => { pgEd.set(""); $("pgout").innerHTML = ""; };
+  $("menu").onclick = () => $("nav").classList.toggle("show");
+  $("pychip").onclick = () => $("diag").classList.toggle("show");
+  $("pychip").ondblclick = () => getPy().then(runSelfTest);
+  window.addEventListener("hashchange", () => { if (location.hash === "#selftest") getPy().then(runSelfTest); });
+  if (location.hash){ const t = document.getElementById(location.hash.slice(1)); if (t) setTimeout(() => t.scrollIntoView(), 50); }
+  getPy().then(() => { if (location.hash === "#selftest") runSelfTest(); }).catch(e => { $("diag").classList.add("show"); });
+});
+</script>
+</body>
+</html>
